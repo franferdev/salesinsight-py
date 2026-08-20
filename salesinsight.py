@@ -4,7 +4,7 @@
   "metadata": {
     "colab": {
       "provenance": [],
-      "authorship_tag": "ABX9TyNs/TC2B0XQ8glRthk9CwdE",
+      "authorship_tag": "ABX9TyMk0eWiQBcf2VTypu4pSjqv",
       "include_colab_link": true
     },
     "kernelspec": {
@@ -28,12 +28,50 @@
     },
     {
       "cell_type": "code",
-      "execution_count": null,
+      "source": [
+        "%%writefile salesinsight.py\n"
+      ],
       "metadata": {
-        "id": "ELKvQZUvFMV_"
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "LYCBLzfnOxwj",
+        "outputId": "adb575cc-d4d8-4de7-f6fd-5ab6c4375519"
       },
-      "outputs": [],
-      "source": []
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Writing salesinsight.py\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "!ls\n",
+        "!python salesinsight.py"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "13fbWDbjPmjD",
+        "outputId": "2c400c40-81b3-456f-c2f6-e4a711b041da"
+      },
+      "execution_count": 13,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "salesinsight.py  sample_data\n"
+          ]
+        }
+      ]
     }
   ]
 }
