@@ -126,3 +126,55 @@ def criar_colunas_derivadas(df_limpo):
 
     print(f"\nColunas derivadas criadas: {['receita_total', 'mes', 'mes_nome', 'trimestre', 'ano', 'faixa_receita_item']}")
     return df_limpo
+
+criar_colunas_derivadas(df_limpo)
+
+# RF05 – Calcular Métricas Agregadas com groupby #
+
+def calcular_metricas(df_limpo):
+    """Calcula métricas agregadas usando groupby."""
+    
+    por_mes = df_limpo.groupby(["mes", "mes_nome"]).agg(
+    receita_total=("receita_total", "sum"),
+    quantidade=("quantidade", "sum"),
+    n_vendas=("id_venda", "count")
+    ).reset_index()
+    
+    top_produtos = df_limpo.groupby("produto").agg(
+    receita_total=("receita_total", "sum")
+    ).sort_values("receita_total", ascending=False).head(5).reset_index()
+    
+    por_categoria = df_limpo.groupby("categoria").agg(
+    receita_total=("receita_total", "sum")
+    ).reset_index()
+    
+    por_regiao = df_limpo.groupby("regiao").agg(
+    receita_total=("receita_total", "sum"),
+    receita_media=("receita_total", "mean"),
+    ).reset_index()
+
+    metricas = {
+    "por_mes": por_mes,
+    "top_produtos": top_produtos,
+    "por_categoria": por_categoria,
+    "por_regiao": por_regiao
+    }
+    return metricas
+
+metricas = calcular_metricas(df_limpo)
+
+print("\n=== MÉTRICAS CALCULADAS ===")
+
+print("\n--- VENDAS POR MÊS ---")
+print(metricas["por_mes"].to_string(index=False))
+
+print("\n--- TOP 5 PRODUTOS ---")
+print(metricas["top_produtos"].to_string(index=False))
+
+print("\n--- RECEITA POR CATEGORIA ---")
+print(metricas["por_categoria"].to_string(index=False))
+
+print("\n--- RECEITA POR REGIÃO ---")
+print(metricas["por_regiao"].to_string(index=False))
+
+calcular_metricas(df_limpo)
