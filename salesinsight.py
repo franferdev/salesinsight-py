@@ -3,6 +3,9 @@ import pandas as pd
 import re
 from datetime import datetime, timedelta
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 
 pasta_atual = Path(__file__).resolve().parent
 df_bruto = pd.read_csv(pasta_atual /    "vendas.csv")
@@ -248,3 +251,90 @@ def calcular_estatisticas(df_limpo):
     return estatisticas
 
 estatisticas = calcular_estatisticas(df_limpo)
+
+# RF08 – Criar Visualizações com Matplotlib e Seaborn #
+
+# configurações globais para os gráficos #
+sns.set_theme(style="whitegrid", palette="muted")
+plt.rcParams['figure.figsize'] = (10, 6)
+plt.rcParams["axes.titlesize"] = 14
+plt.rcParams["axes.titleweight"] = "bold"
+plt.rcParams["axes.labelsize"] = 11
+plt.rcParams["xtick.labelsize"] = 10
+plt.rcParams["ytick.labelsize"] = 10
+plt.rcParams["legend.fontsize"] = 10
+plt.rcParams["figure.titlesize"] = 16
+plt.rcParams["figure.dpi"] = 100
+print("Estilo para gráficos configurado.")
+
+# Gera visualizações com Matplotlib e Seaborn. #
+
+def gerar_visualizacoes(df_limpo, metricas):
+    
+    os.makedirs(pasta_atual / "outputs/graficos", exist_ok=True)
+      
+    # Gráfico 1 — Linha: Receita total por mês ao longo do período #
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(data=metricas["por_mes"], x="mes", y="receita_total", marker="o")
+    plt.title("Receita Total por Mês")
+    plt.xlabel("Mês")
+    plt.ylabel("Receita Total")
+    plt.xticks(ticks=metricas["por_mes"]["mes"], labels=metricas["por_mes"]["mes_nome"])
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(pasta_atual / "outputs/graficos/grafico_receita_por_mes.png")
+    plt.close()
+    
+    # Gráfico 2 — Barra: Top 5 produtos (ou categorias) por receita #  
+    plt.figure(figsize=(10, 6))
+    sns.barplot(data=metricas["top_produtos"], x="produto", y="receita_total", hue="produto", palette="viridis", legend=False)
+    plt.title("Top 5 Produtos por Receita Total")
+    plt.xlabel("Produto")
+    plt.ylabel("Receita Total")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(pasta_atual / "outputs/graficos/grafico_top_5_produtos.png")
+    plt.close()
+
+    # Gráfico 3 — Dispersão: quantidade × receita_total, colorido por categoria
+    plt.figure(figsize=(10, 6))
+    sns.scatterplot(data=df_limpo, x="quantidade", y="receita_total", hue="categoria", palette="colorblind", alpha=0.7)
+    plt.title("Dispersão: Quantidade vs Receita Total")
+    plt.xlabel("Quantidade")
+    plt.ylabel("Receita Total")
+    plt.tight_layout()
+    plt.savefig(pasta_atual / "outputs/graficos/grafico_quantidade_vs_receita.png")
+    plt.close()
+    
+    # Gráfico 4 — Subplots
+    # Figura 2×2 combinando as visões acima e a receita por região
+    fig, axes = plt.subplots(2, 2, figsize=(14, 9))
+    
+    # Receita por mês  
+    axes[0, 0].plot(metricas["por_mes"]["mes"], metricas["por_mes"]["receita_total"], marker="o")
+    axes[0, 0].set_title("Receita por Mês")
+    axes[0, 0].set_xlabel("Mês")
+    axes[0, 0].set_ylabel("Receita Total")
+    
+    axes[0,1].bar(metricas["top_produtos"]["produto"], metricas["top_produtos"]["receita_total"], color="orange")
+    axes[0, 1].set_title("Top 5 Produtos")
+    axes[0, 1].set_xlabel("Produto")
+    axes[0, 1].set_ylabel("Receita Total")
+    
+    axes[1, 0].scatter(df_limpo["quantidade"], df_limpo["receita_total"], c=df_limpo["categoria"].astype('category').cat.codes, cmap="Set1") 
+    axes[1, 0].set_title("Quantidade vs Receita")
+    axes[1, 0].set_xlabel("Quantidade")
+    axes[1, 0].set_ylabel("Receita Total")
+    
+    axes[1, 1].bar(metricas["por_regiao"]["regiao"], metricas["por_regiao"]["receita_total"], color="purple")
+    axes[1, 1].set_title("Receita por Região")
+    axes[1, 1].set_xlabel("Região")
+    axes[1, 1].set_ylabel("Receita Total")
+    fig.suptitle("Sales Insights - Painel de Resumo", fontsize=16)
+    plt.tight_layout()
+    plt.savefig(pasta_atual / "outputs/graficos/painel_resumo.png", dpi=150)
+    plt.close()
+    
+
+
+gerar_visualizacoes(df_limpo, metricas)
