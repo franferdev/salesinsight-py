@@ -2,6 +2,7 @@ from pathlib import Path
 import pandas as pd
 import re
 from datetime import datetime, timedelta
+import numpy as np
 
 pasta_atual = Path(__file__).resolve().parent
 df_bruto = pd.read_csv(pasta_atual /    "vendas.csv")
@@ -74,3 +75,54 @@ def limpeza_dados(df_limpo):
 
 limpeza_dados(df_limpo)
     
+# Criação de Colunas Derivadas (RF04)
+
+def criar_colunas_derivadas(df_limpo):
+    """Cria colunas derivadas no DataFrame."""
+    print("\n=== CRIACAO DE COLUNAS DERIVADAS ===")
+        
+    # Criar coluna receita_total #
+    df_limpo["receita_total"] = df_limpo["quantidade"] * df_limpo["preco_unitario"]
+    
+    # Criar coluna mes #
+    df_limpo["mes"] = df_limpo["data_venda"].dt.month
+    
+    # Criar coluna mes_nome #
+    meses = {
+        1: "Janeiro",
+        2: "Fevereiro",
+        3: "Março",
+        4: "Abril",
+        5: "Maio",
+        6: "Junho",
+        7: "Julho",
+        8: "Agosto",
+        9: "Setembro",
+        10: "Outubro",
+        11: "Novembro",
+        12: "Dezembro"
+    }
+    
+    df_limpo["mes_nome"] = df_limpo["mes"].map(meses)
+    
+    # Criar coluna trimestre #
+    df_limpo["trimestre"] = df_limpo["data_venda"].dt.quarter
+    
+    # Criar coluna ano #
+    df_limpo["ano"] = df_limpo["data_venda"].dt.year
+    
+    # Criar coluna faixa_receita_item com np #
+    condicoes = [
+    df_limpo["receita_total"] < 500,
+    (df_limpo["receita_total"] >= 500) & (df_limpo["receita_total"] < 5000),
+    df_limpo["receita_total"] >= 5000
+    ]
+
+    faixas = ["Baixo Valor", "Medio Valor", "Alto Valor"]
+
+    df_limpo["faixa_receita_item"] = np.select(
+    condicoes, faixas, default="Nao Classificado"
+    )
+
+    print(f"\nColunas derivadas criadas: {['receita_total', 'mes', 'mes_nome', 'trimestre', 'ano', 'faixa_receita_item']}")
+    return df_limpo
