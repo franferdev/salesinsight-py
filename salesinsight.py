@@ -20,8 +20,6 @@ def inspecionar_dados(df_bruto):
     print(f"\nPrimeiros registros:\n{df_bruto.head()}")
     return
 
-inspecionar_dados(df_bruto)
-
 df_limpo = df_bruto.copy()
 
 def limpeza_dados(df_limpo):
@@ -76,8 +74,7 @@ def limpeza_dados(df_limpo):
 
     return df_limpo
 
-df_limpo = limpeza_dados(df_limpo)
-    
+   
 # Criação de Colunas Derivadas (RF04)
 
 def criar_colunas_derivadas(df_limpo):
@@ -130,8 +127,6 @@ def criar_colunas_derivadas(df_limpo):
     print(f"\nColunas derivadas criadas: {['receita_total', 'mes', 'mes_nome', 'trimestre', 'ano', 'faixa_receita_item']}")
     return df_limpo
 
-colunas_derivadas = criar_colunas_derivadas(df_limpo)
-
 # RF05 – Calcular Métricas Agregadas com groupby #
 
 def calcular_metricas(df_limpo):
@@ -164,7 +159,6 @@ def calcular_metricas(df_limpo):
     }
     return metricas
 
-metricas = calcular_metricas(df_limpo)
 
 print("\n=== MÉTRICAS CALCULADAS ===")
 
@@ -192,8 +186,9 @@ def segmentar_clientes(df_limpo):
 
     # Classificação de clientes em segmentos com lambda #  
     clientes["segmento"] = clientes["total_gasto"].apply(
-    lambda gasto: "Bronze" if gasto < 5000 else ("Prata" if gasto < 15000 else "Ouro")
-    if gasto >= 15000 else "Ouro"
+    lambda gasto: "Bronze" if gasto < 5000 
+    else "Prata" if gasto < 15000 
+    else "Ouro"
     )
         
     print("\n=== OS 10 MAIORES CLIENTES POR TOTAL GASTO === ")
@@ -202,8 +197,6 @@ def segmentar_clientes(df_limpo):
     print(clientes["segmento"].value_counts().to_string())
     
     return clientes
-
-clientes_segmentados = segmentar_clientes(df_limpo)
     
    # RF07 – Operações Numéricas com NumPy #
 
@@ -249,8 +242,6 @@ def calcular_estatisticas(df_limpo):
     }
     
     return estatisticas
-
-estatisticas = calcular_estatisticas(df_limpo)
 
 # RF08 – Criar Visualizações com Matplotlib e Seaborn #
 
@@ -298,7 +289,7 @@ def gerar_visualizacoes(df_limpo, metricas):
 
     # Gráfico 3 — Dispersão: quantidade × receita_total, colorido por categoria
     plt.figure(figsize=(10, 6))
-    sns.scatterplot(data=df_limpo, x="quantidade", y="receita_total", hue="categoria", palette="colorblind", alpha=0.7)
+    sns.scatterplot(data=df_limpo, x="quantidade", y="receita_total", hue="categoria", palette="colorblind", alpha=0.6)
     plt.title("Dispersão: Quantidade vs Receita Total")
     plt.xlabel("Quantidade")
     plt.ylabel("Receita Total")
@@ -321,7 +312,7 @@ def gerar_visualizacoes(df_limpo, metricas):
     axes[0, 1].set_xlabel("Produto")
     axes[0, 1].set_ylabel("Receita Total")
     
-    axes[1, 0].scatter(df_limpo["quantidade"], df_limpo["receita_total"], c=df_limpo["categoria"].astype('category').cat.codes, cmap="Set1") 
+    axes[1, 0].scatter(df_limpo["quantidade"], df_limpo["receita_total"], c=df_limpo["categoria"].astype('category').cat.codes, cmap="Set1", alpha=0.6) 
     axes[1, 0].set_title("Quantidade vs Receita")
     axes[1, 0].set_xlabel("Quantidade")
     axes[1, 0].set_ylabel("Receita Total")
@@ -334,7 +325,22 @@ def gerar_visualizacoes(df_limpo, metricas):
     plt.tight_layout()
     plt.savefig(pasta_atual / "outputs/graficos/painel_resumo.png", dpi=150)
     plt.close()
+
+# Função de ordem superior #
+def processar_coluna(df_limpo, coluna, funcao_transformacao, nome_saida=None):
+    """
+    Aplica uma funcao de transformacao a uma coluna do DataFrame.
+    Demonstra o uso de funcoes como argumento.
+    """
+    nome_saida = nome_saida or f"{coluna}_transformado"
+    df_limpo[nome_saida] = df_limpo[coluna].apply(funcao_transformacao)
     
+    df_limpo = processar_coluna(df_limpo, "receita_total",
+                      lambda x: round(x / 1000, 2),
+                      nome_saida="receita_em_milhares")
+    df_limpo = processar_coluna(df_limpo, "quantidade",
+                      lambda q: "Alto Volume" if q > 5 else "Baixo Volume",
+                      nome_saida="perfil_volume")
 
+    return df_limpo
 
-gerar_visualizacoes(df_limpo, metricas)
