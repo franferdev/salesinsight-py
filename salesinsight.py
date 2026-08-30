@@ -73,7 +73,7 @@ def limpeza_dados(df_limpo):
 
     return df_limpo
 
-limpeza_dados(df_limpo)
+df_limpo = limpeza_dados(df_limpo)
     
 # Criação de Colunas Derivadas (RF04)
 
@@ -202,3 +202,49 @@ def segmentar_clientes(df_limpo):
 
 clientes_segmentados = segmentar_clientes(df_limpo)
     
+   # RF07 – Operações Numéricas com NumPy #
+
+def calcular_estatisticas(df_limpo):
+    """
+    Aplica operacoes NumPy sobre a coluna receita_total.
+    Retorna um dicionario com os valores agregados calculados.
+    """
+    receitas = df_limpo["receita_total"].to_numpy()
+    media = np.mean(receitas)
+    mediana = np.median(receitas)
+    desvio_np = np.std(receitas)
+    desvio_pandas = pd.Series(receitas).std()
+    soma = np.sum(receitas)
+    minimo = np.min(receitas)
+    maximo = np.max(receitas)
+    print("\n=== ESTATÍSTICAS DESCRITIVAS DA COLUNA RECEITA_TOTAL ===")
+    print(f" Média: {media}")
+    print(f" Mediana: {mediana}")
+    print(f" Desvio Padrão: {desvio_np}")
+    print(f" Desvio Padrão (Pandas): {desvio_pandas}")
+    print(f" Soma: {soma}")
+    print(f" Mínimo: {minimo}") 
+    print(f" Máximo: {maximo}")
+    
+    # Broadcasting com NumPy para criar uma coluna de receita_total_padronizada e escalonar 0-1 #
+    receita_total_padronizada = (receitas - minimo) / (maximo - minimo)
+    print(f"\nReceita total padronizada (primeiros 5 registros): {receita_total_padronizada[:5]}")
+    
+    # Filtragem booleana com NumPy para identificar registros acima da média #
+    acima_media = receitas > media
+    print(f"\nQuantidade de registros com receita_total acima da média: {np.sum(acima_media)}")
+    
+    estatisticas = {
+    "media": media, 
+    "mediana": mediana,
+    "desvio_np": desvio_np ,
+    "desvio_pandas": desvio_pandas,
+    "soma": soma,
+    "minimo": minimo,
+    "maximo": maximo,
+    "qtd_acima_media": np.sum(acima_media)
+    }
+    
+    return estatisticas
+
+estatisticas = calcular_estatisticas(df_limpo)
