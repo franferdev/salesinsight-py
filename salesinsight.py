@@ -6,9 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import json
 
-pasta_atual = Path(__file__).resolve().parent
-df_bruto = pd.read_csv(pasta_atual /    "vendas.csv")
 
 def inspecionar_dados(df_bruto):
     """Exibe as informacoes estruturais do DataFrame."""
@@ -19,8 +18,6 @@ def inspecionar_dados(df_bruto):
     print(f"\nValores nulos por coluna:\n{df_bruto.isnull().sum()}")
     print(f"\nPrimeiros registros:\n{df_bruto.head()}")
     return
-
-df_limpo = df_bruto.copy()
 
 def limpeza_dados(df_limpo):
     """Limpa e padroniza os dados do DataFrame."""
@@ -71,8 +68,17 @@ def limpeza_dados(df_limpo):
     
     # Relatorio final de quantidade de registros apos a limpeza #
     print(f"\nQuantidade de registros/linhas totais apos a limpeza: {df_limpo.shape[0]}")
+    
+    # Relatorio de limpeza detalhado #
+    relatorio_limpeza = {
+    "datas_invalidas_removidas": int(datas_nulas_registradas),
+    "quantidades_nulas_removidas": int(nulos_quantidade),
+    "precos_nulos_removidos": int(nulos_preco_unitario),
+    "clientes_invalidos_removidos": int(clientes_invalidos),
+    "registros_finais": len(df_limpo)
+    }  
 
-    return df_limpo
+    return df_limpo, relatorio_limpeza
 
    
 # Criação de Colunas Derivadas (RF04)
@@ -124,7 +130,8 @@ def criar_colunas_derivadas(df_limpo):
     condicoes, faixas, default="Nao Classificado"
     )
 
-    print(f"\nColunas derivadas criadas: {['receita_total', 'mes', 'mes_nome', 'trimestre', 'ano', 'faixa_receita_item']}")
+    print(f"\nColunas derivadas criadas: {['receita_total', 'mes', 'mes_nome', 'trimestre', 'ano', 'faixa_receita_item']}")    
+    
     return df_limpo
 
 # RF05 – Calcular Métricas Agregadas com groupby #
@@ -157,22 +164,24 @@ def calcular_metricas(df_limpo):
     "por_categoria": por_categoria,
     "por_regiao": por_regiao
     }
+    
+    print("\n=== MÉTRICAS CALCULADAS ===")
+
+    print("\n--- VENDAS POR MÊS ---")
+    print(metricas["por_mes"].to_string(index=False))
+
+    print("\n--- TOP 5 PRODUTOS ---")
+    print(metricas["top_produtos"].to_string(index=False))
+
+    print("\n--- RECEITA POR CATEGORIA ---")
+    print(metricas["por_categoria"].to_string(index=False))
+
+    print("\n--- RECEITA POR REGIÃO ---")
+    print(metricas["por_regiao"].to_string(index=False))
+    
     return metricas
 
 
-print("\n=== MÉTRICAS CALCULADAS ===")
-
-print("\n--- VENDAS POR MÊS ---")
-print(metricas["por_mes"].to_string(index=False))
-
-print("\n--- TOP 5 PRODUTOS ---")
-print(metricas["top_produtos"].to_string(index=False))
-
-print("\n--- RECEITA POR CATEGORIA ---")
-print(metricas["por_categoria"].to_string(index=False))
-
-print("\n--- RECEITA POR REGIÃO ---")
-print(metricas["por_regiao"].to_string(index=False))
 
 # RF06 – Segmentar Clientes por Nível de Gasto #
 
@@ -262,6 +271,7 @@ print("Estilo para gráficos configurado.")
 
 def gerar_visualizacoes(df_limpo, metricas):
     
+    pasta_atual = Path(__file__).resolve().parent   
     os.makedirs(pasta_atual / "outputs/graficos", exist_ok=True)
       
     # Gráfico 1 — Linha: Receita total por mês ao longo do período #
@@ -335,12 +345,74 @@ def processar_coluna(df_limpo, coluna, funcao_transformacao, nome_saida=None):
     nome_saida = nome_saida or f"{coluna}_transformado"
     df_limpo[nome_saida] = df_limpo[coluna].apply(funcao_transformacao)
     
-    df_limpo = processar_coluna(df_limpo, "receita_total",
-                      lambda x: round(x / 1000, 2),
-                      nome_saida="receita_em_milhares")
-    df_limpo = processar_coluna(df_limpo, "quantidade",
-                      lambda q: "Alto Volume" if q > 5 else "Baixo Volume",
-                      nome_saida="perfil_volume")
-
     return df_limpo
+
+def exportar_resultados(metricas, clientes, estatisticas, pasta_saida):
+    """
+    Exporta metricas, segmentacao de clientes e estatisticas
+    para arquivos CSV e JSON.
+    """
+
+    pasta_saida.mkdir(parents=True, exist_ok=True)
+
+    # 1 - Métricas por mês
+    caminho_metricas = pasta_saida / "metricas_por_mes.csv"
+
+    metricas["por_mes"].to_csv(
+        caminho_metricas,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+
+    # 2 - Segmentação de clientes
+    caminho_clientes = pasta_saida / "segmentacao_clientes.csv"
+
+    clientes.to_csv(
+        caminho_clientes,
+        index=False,
+        encoding="utf-8-sig"
+    )
+
+
+    # 3 - Estatísticas gerais
+    caminho_estatisticas = pasta_saida / "estatisticas_gerais.json"
+
+    # Converte valores NumPy para tipos normais do Python
+    estatisticas_json = {
+        chave: valor.item() if isinstance(valor, np.generic) else valor
+        for chave, valor in estatisticas.items()
+    }
+
+    with open(
+        caminho_estatisticas,
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump(
+            estatisticas_json,
+            f,
+            ensure_ascii=False,
+            indent=4
+        )
+
+
+    # Lê o JSON novamente para conferência
+    with open(
+        caminho_estatisticas,
+        "r",
+        encoding="utf-8"
+    ) as f:
+        conferencia = json.load(f)
+
+
+    print("\n=== RESULTADOS EXPORTADOS ===")
+    print(f"Métricas: {caminho_metricas}")
+    print(f"Clientes: {caminho_clientes}")
+    print(f"Estatísticas: {caminho_estatisticas}")
+
+    print("\nJSON conferido:")
+    print(conferencia)
+
+    return conferencia
 
